@@ -1,0 +1,2 @@
+# Exploring neural representations of spatial environments and human-ecosystem collaboration
+Sandbox environment simulating cognitive maps with graphical neural networks to explore human-ai spatial learning and ecosystem collaboration.
