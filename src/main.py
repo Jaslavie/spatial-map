@@ -6,7 +6,7 @@ import torch
 from dotenv import load_dotenv
 
 from envs.sandbox import Sandbox
-from models.graph import GraphNetwork
+from models.gnn import GraphNetwork
 from visualization.renderer import Renderer
 from utils.logger import Logger
 from utils.data_loader import load_data
