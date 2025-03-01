@@ -11,9 +11,12 @@ naturally nondeterministic and unsupervised):
 $$
 f(x,y) = \sum_{i=1}^{3} \cos(k_i \cdot (x,y) + \phi_i)
 $$
-- (x,y) are the coordinates of the agent
-- k_i is the sine wave function (represent frequency of neural firing)
-- \phi_i is the phase shift/offset between waves (tracks shifts in waves to create optimal hexagonal representation that reduces redundancy)
+
+where:
+- \((x,y)\) are the coordinates of the agent.
+- \( k_i \) represents the frequency of neural firing.
+- \( \phi_i \) is the phase shift/offset between waves, tracking shifts to create an optimal hexagonal representation that reduces redundancy.
+
 three waves (representing equilateral triangles that form the hexagon shape) are spaced 120° apart to form a consistent hexagonal pattern.
 
 # Getting started
