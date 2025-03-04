@@ -8,6 +8,7 @@ Sandbox environment simulating cognitive maps with graphical neural networks and
 We use sinusoidal interference to simulate hexagonal patterns in the brain (this is a 
 simplified, supervised learning model of the brain's neural firing processes which are
 naturally nondeterministic and unsupervised):
+\
 $$
 f(x,y) = \sum_{i=1}^{3} \cos(k_i \cdot (x,y) + \phi_i)
 $$

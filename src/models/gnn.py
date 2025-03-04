@@ -17,7 +17,7 @@ class GridCellModule(nn.Module):
 
         # apply linear transformation to map input (cell encodings) -> output (grid cell activity patterns)
         # this places input features into the latent feature space 
-        self.linear = nn.Linear(input_size, output_size)
+        self.linear = nn.Linear(input_size, output_size, bias=True)
 
         # init frequency vectors (3 sine waves) based on triangular orientation
         self.k_vectors = nn.Parameter(torch.tensor([
@@ -45,9 +45,9 @@ class GridCellModule(nn.Module):
         grid_encoding = torch.sum(grid_outputs, dim=-1, keepdim=True)
 
         # apply non-linear activation function
-        return F.relu(grid_encoding)
+        return F.tanh(grid_encoding)
 
-grid_cell_layer = GridCellModule(input_size=2, output_size=16, scale=2.0)
+grid_cell_layer = GridCellModule(input_size=2, output_size=16, scale=5.0)
 position = torch.tensor([[5.0, 5.0], [10.0, 15.0]])  # Example positions
 grid_activation = grid_cell_layer(position)
 print(grid_activation)
