@@ -50,3 +50,4 @@ Link: [Population Dynamics Embedding](https://www.kaggle.com/datasets/veeralakri
 - Use a Recurrent neural network to update parameters based on historical data instead of only
 on current data
 - Train an unsupervised model to learn grid cell patterns with introducing primed input
+- More robust evals of the model's performance 

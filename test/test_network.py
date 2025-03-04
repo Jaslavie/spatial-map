@@ -35,14 +35,14 @@ class TestSpatialNetwork(unittest.TestCase):
     
     def test_grid_cell_module(self):
         """Test grid cell module outputs have expected shape and values"""
-        module = GridCellModule(input_size=2, output_size=16, scale=0.5)
+        module = GridCellModule(input_size=2, output_size=16, scale=2.0)
         
         # Test with single input
         pos = torch.tensor([[0.5, 0.5]], dtype=torch.float32)
         output = module(pos)
         
         # Check output shape
-        self.assertEqual(output.shape, (1, 1))
+        self.assertEqual(output.shape, (1, 3))
         
         # Check output values are in the valid range for tanh activation (-1, 1)
         self.assertTrue(torch.all(output >= -1.0))
@@ -53,7 +53,7 @@ class TestSpatialNetwork(unittest.TestCase):
         batch_output = module(batch_pos)
         
         # Check batch output shape
-        self.assertEqual(batch_output.shape, (10, 1))
+        self.assertEqual(batch_output.shape, (10, 3))
     
     def test_place_cell_module(self):
         """Test place cell module outputs have expected shape and values"""
@@ -107,8 +107,11 @@ class TestSpatialNetwork(unittest.TestCase):
         grid_module = self.network.grid_modules[0]
         grid_activity = grid_module(pos_tensor).detach().numpy()
         
+        # Sum across the 3 directional components to get a single value per position
+        grid_sum = np.sum(grid_activity, axis=1)
+        
         # Reshape to 2D grid for visualization
-        grid_pattern = grid_activity.reshape(resolution, resolution)
+        grid_pattern = grid_sum.reshape(resolution, resolution)
         
         # Visualize place cell activity
         place_activity = self.network.place_cells(pos_tensor).detach().numpy()
@@ -122,20 +125,52 @@ class TestSpatialNetwork(unittest.TestCase):
         
         print("Grid and place cell activity tests passed!")
         
-        # Save visualization to file (uncomment to generate)
-        # plt.figure(figsize=(10, 5))
-        # plt.subplot(1, 2, 1)
-        # plt.imshow(grid_pattern, cmap='viridis')
-        # plt.title('Grid Cell Activity')
-        # plt.colorbar()
-        # 
-        # plt.subplot(1, 2, 2)
-        # plt.imshow(place_sum, cmap='hot')
-        # plt.title('Place Cell Activity')
-        # plt.colorbar()
-        # 
-        # plt.savefig('spatial_activity.png')
-        # plt.close()
+    def test_visualize_grid_cell_modules(self):
+        """Test visualization of grid cell modules with hexagonal patterns"""
+        resolution = 100
+        x = np.linspace(-2, 2, resolution)
+        y = np.linspace(-2, 2, resolution)
+        xx, yy = np.meshgrid(x, y)
+        positions = np.column_stack((xx.flatten(), yy.flatten()))
+        pos_tensor = torch.FloatTensor(positions)
+        
+        # Create figure
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+        axes = axes.flatten()
+        
+        # Create test grid modules with different scales
+        scales = [2.0, 2.8, 3.6, 4.4, 5.2, 6.0]
+        test_modules = [GridCellModule(input_size=2, output_size=16, scale=s) for s in scales[:6]]
+        
+        # Visualize each grid module
+        for i, module in enumerate(test_modules):
+            if i >= len(axes):
+                break
+            
+            # Get raw grid cell activations
+            with torch.no_grad():
+                grid_activity = module(pos_tensor).detach().numpy()
+            
+            # The hexagonal pattern emerges from the sum of these components
+            # (represents summation of membrane potentials in biological grid cells)
+            grid_sum = np.sum(grid_activity, axis=1)
+            
+            # Reshape to 2D grid for visualization
+            grid_pattern = grid_sum.reshape(resolution, resolution)
+            
+            # Plot the grid pattern
+            im = axes[i].imshow(grid_pattern, cmap='viridis', origin='lower',
+                              extent=[-2, 2, -2, 2])
+            axes[i].set_title(f'Grid Module {i+1}, Scale={scales[i]:.2f}')
+            fig.colorbar(im, ax=axes[i])
+        
+        # Create output directory if it doesn't exist
+        os.makedirs('./logs/plots', exist_ok=True)
+        plt.tight_layout()
+        plt.savefig('./logs/plots/grid_modules.png')
+        plt.close()
+        
+        self.assertTrue(True)
 
 if __name__ == '__main__':
     unittest.main()

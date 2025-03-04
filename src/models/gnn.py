@@ -15,17 +15,20 @@ class GridCellModule(nn.Module):
         self.input_size = input_size
         self.output_size = output_size
         self.scale = scale # scale factor to normalize input
-
+        
         # apply linear transformation to map input (cell encodings) -> output (grid cell activity patterns)
         # this places input features into the latent feature space 
-        self.linear = nn.Linear(input_size, output_size, bias=True)
+        # self.linear = nn.Linear(input_size, output_size, bias=True)
 
         # init frequency vectors (3 sine waves) based on triangular orientation
-        self.k_vectors = nn.Parameter(torch.tensor([
-            [1.0, 0.0],  # Direction 1 (0°)
-            [-0.5, 0.866],  # Direction 2 (120°)
-            [-0.5, -0.866]  # Direction 3 (240°)
-        ]) * scale)
+        angles = torch.tensor([0, np.pi/3, 2*np.pi/3])
+        self.freq_x = nn.Parameter(torch.cos(angles) * scale)
+        self.freq_y = nn.Parameter(torch.sin(angles) * scale)
+        # self.k_vectors = nn.Parameter(torch.tensor([
+        #     [1.0, 0.0],  # Direction 1 (0°)
+        #     [-0.5, 0.866],  # Direction 2 (120°)
+        #     [-0.5, -0.866]  # Direction 3 (240°)
+        # ]) * scale)
 
         # phase shifts
         # start all waves at 0
@@ -35,18 +38,19 @@ class GridCellModule(nn.Module):
     #TODO: potentially use RRN's here instead of current pos for more accurate contextual representation
     def forward(self, pos):
         # forward pass through grid cell modules (spatial encoding -> grid cell activation)
-        # get raw activations
-        latent = self.linear(pos)
-
         # compute periodic activation patterns
         # Compute activity at each point: dot product between latent space and sine wave vectors
-        grid_outputs = torch.cos(torch.matmul(pos, self.k_vectors.T) + self.phases)
+        batch_size = pos.shape[0]
+        x = pos[:, 0].view(batch_size, 1)  
+        y = pos[:, 1].view(batch_size, 1)
 
-        # Compute pattern: Sum the contributions of all three vectors
-        grid_encoding = torch.sum(grid_outputs, dim=-1, keepdim=True)
+        grid_outputs = torch.cos(x * self.freq_x + y * self.freq_y + self.phases)
+        return grid_outputs
+        # # Compute pattern: Sum the contributions of all three vectors
+        # grid_encoding = torch.tanh(grid_outputs)
 
-        # apply non-linear activation function
-        return F.tanh(grid_encoding)
+        # # apply non-linear activation function
+        # return F.tanh(grid_encoding)
 
 class PlaceCellModule(nn.Module):
     # activate specific types of cells at specific landmark locations
@@ -113,7 +117,10 @@ class SpatialNetwork(nn.Module):
         # integrate grid and place cell layers
         # 1D vector of combined grid cell activation patterns
         self.place_cells = PlaceCellModule(input_size, num_place_cells)
-        self.integration_layer = nn.Linear(num_grid_modules + num_place_cells, output_size)
+
+        # integrate grid and place cell layers
+        grid_output_dim = num_grid_modules * 3 # 3 sine waves per grid module
+        self.integration_layer = nn.Linear(grid_output_dim + num_place_cells, output_size)
     def forward(self, pos):
         # forward pass through spatial network to get spatial representation
         # process grid cells and store position outputs
