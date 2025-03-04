@@ -9,6 +9,7 @@ class GridCellModule(nn.Module):
     # implement grid cells to encode spatial position with hexagonal firing patterns
     # uses sinusoidal interference (combination of multiple sine wave patterns) to form a hexagonal pattern
     # import pre-existing nn architecture from pytorch modules
+    # output: grid cell activity patterns as a 1D vector
     def __init__(self, input_size, output_size, scale):
         super(GridCellModule, self).__init__()
         self.input_size = input_size
@@ -47,7 +48,33 @@ class GridCellModule(nn.Module):
         # apply non-linear activation function
         return F.tanh(grid_encoding)
 
-grid_cell_layer = GridCellModule(input_size=2, output_size=16, scale=5.0)
-position = torch.tensor([[5.0, 5.0], [10.0, 15.0]])  # Example positions
-grid_activation = grid_cell_layer(position)
-print(grid_activation)
+class PlaceCellModule(nn.Module):
+    # activate specific types of cells at specific landmark locations
+    # num_place_cells: number of different locations of place cells (how finely tuned the env is mapped)
+    # place fields are locations on the map where specific place cells are most active
+    def __init__(self, input_size, num_place_cells, grid_map):
+        super(PlaceCellModule, self).__init__()
+        self.input_size = input_size
+        self.num_place_cells = num_place_cells 
+        self.grid_map = grid_map
+        # map input to output space (all potential place cells)
+        self.place_cells = nn.linear(input_size, num_place_cells)
+        self._initialize_place_fields()
+    
+    def _initialize_place_fields(self):
+        # init place fields with grid cell activations
+        # rigid representation of the environment updated with rl agent
+        nn.init.normal_(self.place_cells.weight)
+        # generate grid map
+        positions = torch.rand((self.num_place_cells, 2)) * 2 - 1 # (x, y)
+        grid_activations = self.grid_map(positions)
+        # initialize place fields based on grid activations
+        # parameters are saved to train the rl agent
+        self.place_fields = nn.Parameter(grid_activations.clone().detach())
+    def forward(self, pos):
+        # forward pass to get place cell activations based on position tensor
+        # calculate the euclidean distance between the agent position and place cell
+        # use a gaussian function to represent activation size (higher near the center, lower around edges)
+        dist = torch.cdist(pos.unsqueeze(0), self.place_fields)
+        activations = torch.exp(-dist ** 2 / 0.1)  # 0.1 controls place field width
+        return activations
