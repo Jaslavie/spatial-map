@@ -2,7 +2,8 @@
 Sandbox environment simulating cognitive maps with graphical neural networks and deep reinforcement learning to explore human-ai spatial learning and ecosystem collaboration.
 
 # Intro
-### Constructing cell activity patterns (grid cells)
+### Constructing the global environment map (grid cells)
+Grid cells are a type of neuron inside of the **entorhinal cortex** responsible for encoding the spatial layout of the environment.
 We use sinusoidal interference to simulate hexagonal patterns in the brain (this is a 
 simplified, supervised learning model of the brain's neural firing processes which are
 naturally nondeterministic and unsupervised):
@@ -17,7 +18,9 @@ where:
 - $`\phi_i`$ is the phase shift/offset between waves, tracking shifts to create an optimal hexagonal representation that reduces redundancy.
 
 three waves (representing equilateral triangles that form the hexagon shape) are spaced 120° apart to form a consistent hexagonal pattern.
+
 ### Selecting landmark locations and activation patterns (place cells)
+Place cells are a type of neuron inside of the **hippocampus** encoding relevant locations in the environment.
 Place cells activate at high-density regions called "place fields". The number of unique
 place cells locations represents the resolution of environment representation.
 <br/>
